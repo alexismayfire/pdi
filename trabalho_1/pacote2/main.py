@@ -99,9 +99,22 @@ def desenha_linha(p1, p2, img, cor):
     # Ver a explicação disso na função inverte() acima!
     altura, largura, _ = img.shape
 
+    # Essa função vai receber dois objetos Coordenada, p1 e p2.
+    # Cada coordenada (ponto) vai ter X e Y!
+    # Só que ela é chamada por desenha_retangulo() e, da forma que as chamadas são feitas,
+    # p1.x == p2.x ou p1.y == p2.y para qualquer das quatro chamadas...
+    # No código em C o professor incluiu um TODO apenas nessa funçao, desenha_linha()
+    # Mas creio que precise alterar as chamadas em desenha_retangulo() também!
+    # Incluindo mais opções, talvez...
+
     if p1.x == p2.x:
         # Linha vertical
+        #
+        # Aqui é pra definir um início que seja maior que 0, pra não dar overflow na matriz
+        # Se por alguma razão Y das coordenadas for menor que 0, inicio = 0 obrigatoriamente
         inicio = max(0, min(p1.y, p2.y))
+        # Mesma coisa para o fim, obrigado a gerar um valor dentro da matriz.
+        # Se Y for maior do que (altura da imagem - 1), fim = altura - 1
         fim = min(altura - 1, max(p1.y, p2.y))
 
         for y in range(inicio, fim):
@@ -109,6 +122,8 @@ def desenha_linha(p1, p2, img, cor):
 
     elif p1.y == p2.y:
         # Linha horizontal
+        #
+        # Mesma ideia que acima, só é invertido o min/max porque agora trata da largura
         inicio = max(0, min(p1.x, p2.x))
         fim = min(largura - 1, max(p1.x, p2.x))
 
@@ -129,21 +144,79 @@ def desenha_retangulo(r, img, cor=VERMELHO):
     altura, largura, _ = img.shape
 
     # Essa função não foi comentada pelo professor, mas tem a seguinte lógica:
+    # Cada if vai verificar se as coordenadas do retângulo estão dentro
+    # da matriz da imagem. Por isso todas precisam ser maior que zero,
+    # r.d e r.e precisam ser menores que a largura (estão no eixo X)
+    # r.c e r.b precisam ser menores que a altura (estão no eixo Y)
+
+    # Esses if são independentes no código em C, ou seja, vai SEMPRE testar as
+    # 4 condições em cada chamada dessa função!
+    # Apenas como observação, em Python o if segue o padrão abaixo.
+    #
+    # else if -> elif
+    # && -> and
+    # || -> or
+    #
+    # if condicao:
+    #   print(condicao)
+    # elif outra_condicao:
+    #   print(outra_condicao)
+    # else:
+    #   print("Nenhuma das duas!")
+    #
+    # Não precisa separar os termos com (), apenas se quiser criar um isolamento
+    # Em C isso seria da mesma forma:
+    #
+    # if condicao and (outra_condicao or ainda_outra_condicao):
+    #   print("'condicao' é verdadeiro, e 'outra_condicao' ou 'ainda_outra_condicao' também!)
+    #
+    # No caso acima, 'condicao' e o resultado da expressão em () precisa ser verdadeiro.
+    # Ou seja, apenas uma das duas variáveis entre parentêses precisaria ser verdadeira,
+    # por causa do 'or'
+
+    # Os dois primeiros parâmetros são objetos simples que estão sendo passados (Coordenada).
+    # Cada objeto vai ter as propriedades X e Y.
 
     # Esquerda.
-    if r.e >= 0 and r.e < altura:
+    if r.e >= 0 and r.e < largura:
+        # Aqui, a primeira Coordenada vai ser:
+        #
+        # Coordenada.x = r.e
+        # Coordenada.y = r.c
+        #
+        # E a segunda:
+        #
+        # Coordenada.x = r.e
+        # Coordenada.y = r.b
+        #
+        # Ou seja, vamos ter dois pontos no plano da imagem, onde:
+        # X = r.e
+        # Y = [r.c, r.b]
+        # Isso deve gerar uma linha VERTICAL, porque apenas Y está variando!
         img = desenha_linha(Coordenada(r.e, r.c), Coordenada(r.e, r.b), img, cor)
 
     # Direita.
-    if r.d >= 0 and r.d < altura:
-        img = desenha_linha(Coordenada(r.d, r.c), Coordenada(r.e, r.b), img, cor)
+    if r.d >= 0 and r.d < largura:
+        # Aqui também, apenas Y vai variar:
+        # X = r.d
+        # Y = [r.c, r.b]
+        # Isso deve gerar uma linha VERTICAL
+        img = desenha_linha(Coordenada(r.d, r.c), Coordenada(r.d, r.b), img, cor)
 
     # Cima.
-    if r.c >= 0 and r.c < largura:
+    if r.c >= 0 and r.c < altura:
+        # Aqui, X vai variar e Y é fixo:
+        # X = [r.e, r.d]
+        # Y = r.c
+        # Então, uma linha HORIZONTAL, porque apenas X está variando!
         img = desenha_linha(Coordenada(r.e, r.c), Coordenada(r.d, r.c), img, cor)
 
     # Baixo.
-    if r.b >= 0 and r.b < largura:
+    if r.b >= 0 and r.b < altura:
+        # Mesma coisa que acima, só X vai variar:
+        # X = [r.e, r.d]
+        # Y = r.b
+        # Então, linha HORIZONTAL também!
         img = desenha_linha(Coordenada(r.e, r.b), Coordenada(r.d, r.b), img, cor)
 
     return img
@@ -213,6 +286,8 @@ if __name__ == "__main__":
     n_componentes, componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
     tempo_total = datetime.now() - tempo_inicio
 
+    # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}. 
+    # Disponível a partir do Python 3.6
     print(f"Tempo: {tempo_total}")
     print(f"Componentes detectados: {n_componentes}")
 
@@ -220,4 +295,4 @@ if __name__ == "__main__":
     for i in range(0, n_componentes):
         img_out = desenha_retangulo(componentes[i].retangulo, img_out)
 
-    cv2.imwrite("02 - out.bmp", img_out)
+    salvar_imagem("02 - out.bmp", img_out)
