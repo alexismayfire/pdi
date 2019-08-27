@@ -46,12 +46,21 @@ def salvar_imagem(nome, img):
     # altura = img.shape[0]
     # largura = img.shape[1]
     # canais = img.shape[2]
-    altura, largura, canais = img.shape
+    canais = None
+
+    try:
+        altura, largura, canais = img.shape
+    except ValueError:
+        # Imagem não tem 3 canais!
+        altura, largura = img.shape
 
     for y in range(0, altura):
         for x in range(0, largura):
-            for canal in range(0, canais):
-                img[y][x][canal] = img[y][x][canal] * 255
+            if canais:
+                for canal in range(0, canais):
+                    img[y][x][canal] = img[y][x][canal] * 255
+            else:
+                img[y][x] = img[y][x] * 255
 
     cv2.imwrite(nome, img)
 
@@ -223,22 +232,22 @@ def desenha_retangulo(r, img, cor=VERMELHO):
 
 
 def binariza(img, threshold):
-    # TODO: implementar
+    altura, largura, canais = img.shape
 
-    # altura = img.shape[0]
-    # largura = img.shape[1]
-    # canais = img.shape[2]
+    # Cria uma imagem com apenas um canal
+    img_out = np.zeros((altura, largura))
     # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
-    for y in range(0, img.shape[0]):
-        for x in range(0, img.shape[1]):
-            for canal in range(0, img.shape[2]):
+    for y in range(0, altura):
+        for x in range(0, largura):
+            for canal in range(0, canais):
                 if img[y][x][canal] >= threshold:
-                    img[y][x][canal] = 1.0
+                    img[y][x] = np.float(1.0)
                 else:
-                    img[y][x][canal] = 0
-    
+                    img[y][x] = np.float(0)
+
     print("Binarizado")
     return img
+
 
 def rotula(img, largura_min, altura_min, n_pixels_min):
     # TODO: implementar, mock de teste
@@ -298,13 +307,13 @@ if __name__ == "__main__":
     ##n_componentes, componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
     ##tempo_total = datetime.now() - tempo_inicio
 
-    # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}. 
+    # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}.
     # Disponível a partir do Python 3.6
     ##print(f"Tempo: {tempo_total}")
     ##print(f"Componentes detectados: {n_componentes}")
 
     # Mostra os objetos encontrados
     ##for i in range(0, n_componentes):
-        ##img_out = desenha_retangulo(componentes[i].retangulo, img_out)
+    ##img_out = desenha_retangulo(componentes[i].retangulo, img_out)
 
     ##salvar_imagem("02 - out.bmp", img_out)
