@@ -7,7 +7,7 @@ import numpy as np
 # Aqui usa as mesmas constantes que o código em C
 INPUT_IMAGE = "arroz.bmp"
 NEGATIVO = 0
-THRESHOLD = 0.4
+THRESHOLD = 0.77
 ALTURA_MIN = 1
 LARGURA_MIN = 1
 N_PIXELS_MIN = 1
@@ -225,8 +225,20 @@ def desenha_retangulo(r, img, cor=VERMELHO):
 def binariza(img, threshold):
     # TODO: implementar
 
+    # altura = img.shape[0]
+    # largura = img.shape[1]
+    # canais = img.shape[2]
+    # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
+    for y in range(0, img.shape[0]):
+        for x in range(0, img.shape[1]):
+            for canal in range(0, img.shape[2]):
+                if img[y][x][canal] >= threshold:
+                    img[y][x][canal] = 1.0
+                else:
+                    img[y][x][canal] = 0
+    
+    print("Binarizado")
     return img
-
 
 def rotula(img, largura_min, altura_min, n_pixels_min):
     # TODO: implementar, mock de teste
@@ -281,18 +293,18 @@ if __name__ == "__main__":
     img = binariza(img, THRESHOLD)
     salvar_imagem("01 - binarizada.bmp", img)
 
-    tempo_inicio = datetime.now()
+    ##tempo_inicio = datetime.now()
     # Aqui a função rotula() deve retornar dois elementos, em Python pode!
-    n_componentes, componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
-    tempo_total = datetime.now() - tempo_inicio
+    ##n_componentes, componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
+    ##tempo_total = datetime.now() - tempo_inicio
 
     # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}. 
     # Disponível a partir do Python 3.6
-    print(f"Tempo: {tempo_total}")
-    print(f"Componentes detectados: {n_componentes}")
+    ##print(f"Tempo: {tempo_total}")
+    ##print(f"Componentes detectados: {n_componentes}")
 
     # Mostra os objetos encontrados
-    for i in range(0, n_componentes):
-        img_out = desenha_retangulo(componentes[i].retangulo, img_out)
+    ##for i in range(0, n_componentes):
+        ##img_out = desenha_retangulo(componentes[i].retangulo, img_out)
 
-    salvar_imagem("02 - out.bmp", img_out)
+    ##salvar_imagem("02 - out.bmp", img_out)
