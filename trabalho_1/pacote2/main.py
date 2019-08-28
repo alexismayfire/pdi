@@ -54,15 +54,17 @@ def salvar_imagem(nome, img):
         # Imagem não tem 3 canais!
         altura, largura = img.shape
 
+    saida = np.zeros(img.shape)
+
     for y in range(0, altura):
         for x in range(0, largura):
             if canais:
                 for canal in range(0, canais):
-                    img[y][x][canal] = img[y][x][canal] * 255
+                    saida[y][x][canal] = img[y][x][canal] * 255
             else:
-                img[y][x] = img[y][x] * 255
+                saida[y][x] = img[y][x] * 255
 
-    cv2.imwrite(nome, img)
+    cv2.imwrite(nome, saida)
 
 
 def inverte(img):
@@ -235,46 +237,49 @@ def binariza(img, threshold):
     altura, largura, canais = img.shape
 
     # Cria uma imagem com apenas um canal
-    img_out = np.zeros((altura // 2, largura // 2))
+    img_out = np.zeros((altura // 3, largura // 3))
     # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
-    for y in range(0, altura // 2):
-        for x in range(0, largura // 2):
+    for y in range(0, altura // 3):
+        for x in range(0, largura // 3):
             for canal in range(0, canais):
                 if img[y][x][canal] >= threshold:
                     img_out[y][x] = np.float(1.0)
                 else:
                     img_out[y][x] = np.float(0)
 
-    print("Binarizado")
     return img_out
 
 
-def inunda(rotulo, img_rotulada, img, y_inicial, x_inicial):
-    img_rotulada[y_inicial][x_inicial] = rotulo
-    mudou = True
-    altura, largura = img_rotulada.shape
+def inunda(label, img, y, x):
+    altura, largura = img.shape
+    img[y][x] = label
 
-    for y in range(0, altura):
-        for x in range(0, largura):
-            if img_rotulada[y][x] == rotulo:
-                if y > 0 and img[y - 1][x] == np.float(1):
-                    img_rotulada[y - 1][x] = rotulo
-                if y < altura - 1 and img[y + 1][x] == np.float(1):
-                    img_rotulada[y + 1][x] = rotulo
-                if x > 0 and img[y][x - 1] == np.float(1):
-                    img_rotulada[y][x - 1] = rotulo
-                if x < largura - 1 and img[y][x + 1] == np.float(1):
-                    img_rotulada[y][x + 1] = rotulo
+    # Cima
+    if y > 0 and img[y - 1][x] == -1:
+        img = inunda(label, img, y - 1, x)
+    # Direita
+    if x < largura - 1 and img[y][x + 1] == -1:
+        img = inunda(label, img, y, x + 1)
+    # Baixo
+    if y < altura - 1 and img[y + 1][x] == -1:
+        img = inunda(label, img, y + 1, x)
+    # Esquerda
+    if x > 0 and img[y][x - 1] == -1:
+        img = inunda(label, img, y, x - 1)
 
-    return img_rotulada
+    return img
 
 
 def rotula(img, largura_min, altura_min, n_pixels_min):
     componentes = []
-    ultimo_rotulo = 1
+    label = 1
 
     altura, largura = img.shape
-    img_rotulada = np.full(img.shape, -1)
+
+    for y in range(0, altura):
+        for x in range(0, largura):
+            if img[y][x] == np.float(1):
+                img[y][x] = -1
 
     # Criação de Matriz Auxiliar
     for y in range(0, altura):
@@ -282,12 +287,33 @@ def rotula(img, largura_min, altura_min, n_pixels_min):
             # Se o pixel faz parte do foreground, vai ser 1 em 'img'
             # foreground = -1 arbitrário
             # background = 0 arbitrário
-            if img[y][x] == np.float(1):
-                img_rotulada = inunda(ultimo_rotulo, img_rotulada, img, y, x)
-                print(ultimo_rotulo)
-                ultimo_rotulo += 1
+            if img[y][x] == -1:
+                img = inunda(label, img, y, x)
+                print(f"Label: {label}, y: {y} | x: {x}")
+                ret = Retangulo(9999, -1, 9999, -1)
+                comp = Componente(ret)
+                comp.label = label
+                componentes.append(comp)
+                label += 1
 
-    return img_rotulada
+    for y in range(0, altura):
+        for x in range(0, largura):
+            if img[y][x] > 0:
+                comp_atual = int(img[y][x]) - 1
+                componentes[comp_atual].n_pixels += 1
+                if y < componentes[comp_atual].retangulo.c:
+                    componentes[comp_atual].retangulo.c = y
+                
+                if y > componentes[comp_atual].retangulo.b:
+                    componentes[comp_atual].retangulo.b = y
+
+                if x < componentes[comp_atual].retangulo.e:
+                    componentes[comp_atual].retangulo.e = x
+                
+                if x > componentes[comp_atual].retangulo.d:
+                    componentes[comp_atual].retangulo.d = x
+
+    return componentes
     # r1 = Retangulo(10, 100, 50, 200)
     # r2 = Retangulo(300, 250, 450, 350)
     # r3 = Retangulo(500, 550, 700, 750)
@@ -334,7 +360,7 @@ if __name__ == "__main__":
         img = inverte(img)
 
     img_out = binariza(img, THRESHOLD)
-    salvar_imagem("01 - binarizada.bmp", img)
+    salvar_imagem("01 - binarizada.bmp", img_out)
 
     tempo_inicio = datetime.now()
     # Aqui a função rotula() deve retornar dois elementos, em Python pode!
@@ -343,11 +369,11 @@ if __name__ == "__main__":
 
     # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}.
     # Disponível a partir do Python 3.6
-    ##print(f"Tempo: {tempo_total}")
-    ##print(f"Componentes detectados: {n_componentes}")
+    print(f"Tempo: {tempo_total}")
+    print(f"Componentes detectados: {len(componentes)}")
 
     # Mostra os objetos encontrados
-    ##for i in range(0, n_componentes):
-    ##img_out = desenha_retangulo(componentes[i].retangulo, img_out)
+    for i in range(0, len(componentes)):
+        img = desenha_retangulo(componentes[i].retangulo, img)
 
-    ##salvar_imagem("02 - out.bmp", img_out)
+    salvar_imagem("02 - out.bmp", img)
