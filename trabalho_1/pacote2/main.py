@@ -28,7 +28,6 @@ class Retangulo:
         self.e = esquerda
         self.d = direita
 
-
 class Componente:
     def __init__(self, retangulo):
         self.retangulo = retangulo
@@ -54,8 +53,10 @@ def salvar_imagem(nome, img):
         # Imagem não tem 3 canais!
         altura, largura = img.shape
 
+    # Cria uma matriz de ZEROS do tamanho da imagem
     saida = np.zeros(img.shape)
 
+    # Preenche a matriz de saída com a imagem "Desnormalizando" ao multiplicar por 255
     for y in range(0, altura):
         for x in range(0, largura):
             if canais:
@@ -64,20 +65,21 @@ def salvar_imagem(nome, img):
             else:
                 saida[y][x] = img[y][x] * 255
 
+    # Salva a Imagem na pasta
     cv2.imwrite(nome, saida)
 
 
 def inverte(img):
     # Explicação desse syntactic sugar na função salvar_imagem() acima!
     #
-    # Mas aqui, eu defino "_" como boa prática, porque não precisamos desse valor.
+    # Mas aqui, definimos "_" como boa prática, porque não precisamos desse valor.
     # Porém, precisa "desempacotar" do vetor img.shape! Se fizer apenas assim:
     #
     # altura, largura = img.shape
     #
     # Vai dar uma exceção:
     # ValueError: too many values to unpack (expected 2)
-    # Porque definimos duas variáveis, mas img.shape é um vetor com 3 posições
+    # img.shape é um vetor com 3 posições
     # e todas precisam ser retornadas
     altura, largura, _ = img.shape
 
@@ -238,6 +240,7 @@ def binariza(img, threshold):
 
     # Cria uma imagem com apenas um canal
     img_out = np.zeros((altura, largura))
+    
     # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
     for y in range(0, altura):
         for x in range(0, largura):
@@ -254,6 +257,7 @@ def inunda(label, img, y, x):
     altura, largura = img.shape
     img[y][x] = label
 
+    # Analisa se existem pixels vizinhos, pois perto das margens não terão
     # Cima
     if y > 0 and img[y - 1][x] == -1:
         img = inunda(label, img, y - 1, x)
@@ -305,7 +309,7 @@ def rotula(img, largura_min, altura_min, n_pixels_min):
 
     for y in range(0, altura):
         for x in range(0, largura):
-            # Agora, como atualizamos img (que antes possuía valores binários, [0, -1])
+            # Agora, como atualizamos img (que antes possuía valores binários, [0, -1]) com os RÓTULOS
             # A matriz vai conter valores [0...n], onde n é a quantidade de rótulos identificados no passo anterior
             if img[y][x] > 0:
                 # Para pegar o índice do componente
