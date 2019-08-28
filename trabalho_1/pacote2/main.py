@@ -235,29 +235,64 @@ def binariza(img, threshold):
     altura, largura, canais = img.shape
 
     # Cria uma imagem com apenas um canal
-    img_out = np.zeros((altura, largura))
+    img_out = np.zeros((altura // 2, largura // 2))
     # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
-    for y in range(0, altura):
-        for x in range(0, largura):
+    for y in range(0, altura // 2):
+        for x in range(0, largura // 2):
             for canal in range(0, canais):
                 if img[y][x][canal] >= threshold:
-                    img[y][x] = np.float(1.0)
+                    img_out[y][x] = np.float(1.0)
                 else:
-                    img[y][x] = np.float(0)
+                    img_out[y][x] = np.float(0)
 
     print("Binarizado")
-    return img
+    return img_out
+
+
+def inunda(rotulo, img_rotulada, img, y_inicial, x_inicial):
+    img_rotulada[y_inicial][x_inicial] = rotulo
+    mudou = True
+    altura, largura = img_rotulada.shape
+
+    for y in range(0, altura):
+        for x in range(0, largura):
+            if img_rotulada[y][x] == rotulo:
+                if y > 0 and img[y - 1][x] == np.float(1):
+                    img_rotulada[y - 1][x] = rotulo
+                if y < altura - 1 and img[y + 1][x] == np.float(1):
+                    img_rotulada[y + 1][x] = rotulo
+                if x > 0 and img[y][x - 1] == np.float(1):
+                    img_rotulada[y][x - 1] = rotulo
+                if x < largura - 1 and img[y][x + 1] == np.float(1):
+                    img_rotulada[y][x + 1] = rotulo
+
+    return img_rotulada
 
 
 def rotula(img, largura_min, altura_min, n_pixels_min):
-    # TODO: implementar, mock de teste
-    time.sleep(2)
+    componentes = []
+    ultimo_rotulo = 1
 
-    r1 = Retangulo(10, 100, 50, 200)
-    r2 = Retangulo(300, 250, 450, 350)
-    r3 = Retangulo(500, 550, 700, 750)
+    altura, largura = img.shape
+    img_rotulada = np.full(img.shape, -1)
 
-    return 3, [Componente(r1), Componente(r2), Componente(r3)]
+    # Criação de Matriz Auxiliar
+    for y in range(0, altura):
+        for x in range(0, largura):
+            # Se o pixel faz parte do foreground, vai ser 1 em 'img'
+            # foreground = -1 arbitrário
+            # background = 0 arbitrário
+            if img[y][x] == np.float(1):
+                img_rotulada = inunda(ultimo_rotulo, img_rotulada, img, y, x)
+                print(ultimo_rotulo)
+                ultimo_rotulo += 1
+
+    return img_rotulada
+    # r1 = Retangulo(10, 100, 50, 200)
+    # r2 = Retangulo(300, 250, 450, 350)
+    # r3 = Retangulo(500, 550, 700, 750)
+
+    # return 3, [Componente(r1), Componente(r2), Componente(r3)]
 
 
 if __name__ == "__main__":
@@ -270,42 +305,41 @@ if __name__ == "__main__":
     # img.shape contem altura, largura e canais em uma tupla: (altura, largura, canais)
     # A função np.zeros cria uma matriz preenchida com zeros no formato passado
     # Ou seja, [altura][largura][canais]
-    img_out = np.zeros(img.shape)
-    for i in range(0, 3):
-        # Aqui é um syntactic sugar do Python, ao invés de iterar na matriz
-        # é possível copiar os valores usando array slicing
-        # Ref: https://stackoverflow.com/questions/509211/understanding-slice-notation
-        # Sabendo que a matriz "img" tem três dimensões, e acessamos um pixel assim:
-        #
-        # pixel = img[y][x][canal]
-        #
-        # A construção abaixo é equivalente a:
-        #
-        # for y in range(0, altura):
-        #   for x in range(0, largura):
-        #       for canal in range(0, canais):
-        #           img_out[y][x][canal] = img[y][x][0]
-        #
-        # Ou seja, estamos copiando apenas o valor do canal 0 nos 3 canais de img_out!
-        # O professor executa isso na função cinzaParaRgb no código em C:
-        #
-        # int i, j, k;
-        # for (i = 0; i < 3; i++)
-        #   for (j = 0; j < in->altura; j++)
-        #        for (k = 0; k < in->largura; k++)
-        #            out->dados [i][j][k] = in->dados [0][j][k];
-        img_out[:, :, i] = img[:, :, 0]
+    # for i in range(0, 3):
+    # Aqui é um syntactic sugar do Python, ao invés de iterar na matriz
+    # é possível copiar os valores usando array slicing
+    # Ref: https://stackoverflow.com/questions/509211/understanding-slice-notation
+    # Sabendo que a matriz "img" tem três dimensões, e acessamos um pixel assim:
+    #
+    # pixel = img[y][x][canal]
+    #
+    # A construção abaixo é equivalente a:
+    #
+    # for y in range(0, altura):
+    #   for x in range(0, largura):
+    #       for canal in range(0, canais):
+    #           img_out[y][x][canal] = img[y][x][0]
+    #
+    # Ou seja, estamos copiando apenas o valor do canal 0 nos 3 canais de img_out!
+    # O professor executa isso na função cinzaParaRgb no código em C:
+    #
+    # int i, j, k;
+    # for (i = 0; i < 3; i++)
+    #   for (j = 0; j < in->altura; j++)
+    #        for (k = 0; k < in->largura; k++)
+    #            out->dados [i][j][k] = in->dados [0][j][k];
+    # img_out[:, :, i] = img[:, :, 0]
 
     if NEGATIVO:
         img = inverte(img)
 
-    img = binariza(img, THRESHOLD)
+    img_out = binariza(img, THRESHOLD)
     salvar_imagem("01 - binarizada.bmp", img)
 
-    ##tempo_inicio = datetime.now()
+    tempo_inicio = datetime.now()
     # Aqui a função rotula() deve retornar dois elementos, em Python pode!
-    ##n_componentes, componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
-    ##tempo_total = datetime.now() - tempo_inicio
+    componentes = rotula(img_out, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
+    tempo_total = datetime.now() - tempo_inicio
 
     # Esse 'f' na frente é pra interpolação de variáveis em strings, usando elas dentro de {}.
     # Disponível a partir do Python 3.6
