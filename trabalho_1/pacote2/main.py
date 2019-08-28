@@ -237,10 +237,10 @@ def binariza(img, threshold):
     altura, largura, canais = img.shape
 
     # Cria uma imagem com apenas um canal
-    img_out = np.zeros((altura // 3, largura // 3))
+    img_out = np.zeros((altura, largura))
     # Percorre a imagem toda e analisa, se for maior que o threshold fica branco, senão fica preto
-    for y in range(0, altura // 3):
-        for x in range(0, largura // 3):
+    for y in range(0, altura):
+        for x in range(0, largura):
             for canal in range(0, canais):
                 if img[y][x][canal] >= threshold:
                     img_out[y][x] = np.float(1.0)
@@ -276,20 +276,27 @@ def rotula(img, largura_min, altura_min, n_pixels_min):
 
     altura, largura = img.shape
 
+    # Trocando tudo que foi marcado como branco na binariza() para -1 (foreground)
+    # Esse passo talvez não fosse necessário. Na binariza(), poderia marcar direto como -1!
+    # Caso quisesse salvar a imagem binarizada apenas, teria que alterar a salvar_imagem(),
+    # para multiplicar por 'abs(img[y][x]) * 255'.
+    #
+    # Outra solução: ao binarizar a imagem, criar UM canal.
+    # Ou seja, os valores dos pixels seriam acessados como img[y][x][0].
+    # Na identificação de rótulos, ao invés de substituir o valor -1 (foreground) em img,
+    # poderia colocar no "segundo canal": img[y][x][1] = label
+    # Ao final dessa função, removemos essa posição extra (ou não, porque img não é mais usada na main) 
     for y in range(0, altura):
         for x in range(0, largura):
             if img[y][x] == np.float(1):
                 img[y][x] = -1
 
-    # Criação de Matriz Auxiliar
     for y in range(0, altura):
         for x in range(0, largura):
-            # Se o pixel faz parte do foreground, vai ser 1 em 'img'
-            # foreground = -1 arbitrário
-            # background = 0 arbitrário
             if img[y][x] == -1:
                 img = inunda(label, img, y, x)
-                print(f"Label: {label}, y: {y} | x: {x}")
+                # Inicializando o retângulo com valores muito altos ou muito pequenos,
+                # no próximo passo identificamos as coordenadas limite de acordo com o label
                 ret = Retangulo(9999, -1, 9999, -1)
                 comp = Componente(ret)
                 comp.label = label
@@ -298,27 +305,44 @@ def rotula(img, largura_min, altura_min, n_pixels_min):
 
     for y in range(0, altura):
         for x in range(0, largura):
+            # Agora, como atualizamos img (que antes possuía valores binários, [0, -1])
+            # A matriz vai conter valores [0...n], onde n é a quantidade de rótulos identificados no passo anterior
             if img[y][x] > 0:
-                comp_atual = int(img[y][x]) - 1
-                componentes[comp_atual].n_pixels += 1
-                if y < componentes[comp_atual].retangulo.c:
-                    componentes[comp_atual].retangulo.c = y
-                
-                if y > componentes[comp_atual].retangulo.b:
-                    componentes[comp_atual].retangulo.b = y
+                # Para pegar o índice do componente
+                # Como label começa em 1, precisa diminuir
+                indice_comp = int(img[y][x]) - 1
+                componentes[indice_comp].n_pixels += 1
 
-                if x < componentes[comp_atual].retangulo.e:
-                    componentes[comp_atual].retangulo.e = x
-                
-                if x > componentes[comp_atual].retangulo.d:
-                    componentes[comp_atual].retangulo.d = x
+                # Para atualizar o menor valor de Y para o label corrente (cima)
+                if y < componentes[indice_comp].retangulo.c:
+                    componentes[indice_comp].retangulo.c = y
+
+                # Para atualizar o maior valor de Y para o label corrente (baixo)
+                if y > componentes[indice_comp].retangulo.b:
+                    componentes[indice_comp].retangulo.b = y
+
+                # Para atualizar o menor valor de X para o label corrente (esquerda)
+                if x < componentes[indice_comp].retangulo.e:
+                    componentes[indice_comp].retangulo.e = x
+
+                # Para atualizar o maior valor de X para o label corrente (direita) 
+                if x > componentes[indice_comp].retangulo.d:
+                    componentes[indice_comp].retangulo.d = x
+
+    # Agora, iteramos na lista de componentes para identificar os que são pequenos demais e remover
+    aux = componentes
+    componentes = []
+    for componente in aux:
+        altura_componente = componente.retangulo.b - componente.retangulo.c
+        largura_componente = componente.retangulo.d - componente.retangulo.e
+        if (
+            componente.n_pixels > n_pixels_min
+            and altura_componente > altura_min
+            and largura_componente > largura_min
+        ):
+            componentes.append(componente)
 
     return componentes
-    # r1 = Retangulo(10, 100, 50, 200)
-    # r2 = Retangulo(300, 250, 450, 350)
-    # r3 = Retangulo(500, 550, 700, 750)
-
-    # return 3, [Componente(r1), Componente(r2), Componente(r3)]
 
 
 if __name__ == "__main__":
