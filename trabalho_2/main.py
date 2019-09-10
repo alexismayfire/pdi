@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import cv2
 import numpy as np
 
@@ -27,54 +29,7 @@ def salvar_imagem(nome, img):
     cv2.imwrite(nome, saida)
 
 
-def soma_pixel(pixel, valor_janela):
-    blue, green, red = pixel
-    valor_janela["blue"] += blue
-    valor_janela["green"] += green
-    valor_janela["red"] += red
-
-    return valor_janela
-
-
 class Ingenuo:
-    @staticmethod
-    def janela(shape, img, y, x):
-
-        # Passa os 3 canais do pixel para variáveis separadas
-        blue, green, red = img[y][x]
-        # Cria um dicionário para os canais
-        valor_janela = {"blue": np.float(0), "green": np.float(0), "red": np.float(0)}
-        # Define um limite para percorrer a janela
-        limit = (shape // 2) + 1
-
-        # Percorre a janela
-        # range(1, 3)
-        # só vai iterar usando o 1!
-        for y_start in range(1, limit):
-            # Linha de cima, mesma coluna
-            valor_janela = soma_pixel(img[y - y_start][x], valor_janela)
-            # Linha de baixo, mesma coluna
-            valor_janela = soma_pixel(img[y + y_start][x], valor_janela)
-            for x_start in range(1, limit):
-                # Linha de cima, coluna da esquerda
-                valor_janela = soma_pixel(img[y - y_start][x - x_start], valor_janela)
-                # Linha de cima, coluna da direita
-                valor_janela = soma_pixel(img[y - y_start][x + x_start], valor_janela)
-                # Linha corrente, coluna da esquerda
-                valor_janela = soma_pixel(img[y][x - x_start], valor_janela)
-                # Linha corrente, coluna da direita
-                valor_janela = soma_pixel(img[y][x + x_start], valor_janela)
-                # Linha de baixo, coluna da esquerda
-                valor_janela = soma_pixel(img[y + y_start][x - x_start], valor_janela)
-                # Linha de baixo, coluna da direita
-                valor_janela = soma_pixel(img[y + y_start][x + x_start], valor_janela)
-
-        valor_pixel = []
-        for canal, valor in valor_janela.items():
-            valor_pixel.append(valor / shape ** 2)
-
-        return np.asarray(valor_pixel)
-
     @staticmethod
     def blur(img, shape=3):
         if shape % 2 == 0:
@@ -82,11 +37,17 @@ class Ingenuo:
 
         new_img = np.zeros(img.shape)
         altura, largura, canais = img.shape
+        janela = shape // 2
 
-        for y in range(1, altura - shape // 2):
-            for x in range(1, largura - shape // 2):
-                pixel = Ingenuo.janela(shape, img, y, x)
-                new_img[y][x] = pixel
+        for y in range(janela, altura - janela):
+            for x in range(janela, largura - janela):
+                y1 = y - janela
+                y2 = y + janela + 1
+                x1 = x - janela
+                x2 = x + janela + 1
+                new_img[y][x][0] = sum(sum(img[y1:y2, x1:x2, 0])) / (shape ** 2)
+                new_img[y][x][1] = sum(sum(img[y1:y2, x1:x2, 1])) / (shape ** 2)
+                new_img[y][x][2] = sum(sum(img[y1:y2, x1:x2, 2])) / (shape ** 2)
 
         return new_img
 
@@ -97,18 +58,41 @@ class Separavel:
         if shape % 2 == 0:
             raise ValueError("O shape da janela precisa ser ímpar!")
 
-        new_img = np.zeros(img.shape)
+        h = np.zeros(img.shape)
+        v = np.zeros(img.shape)
         altura, largura, canais = img.shape
+        janela = shape // 2
 
-        for y in range(1, altura - shape // 2):
-            for x in range(1, largura - shape // 2):
-                new_img[y][x] = img[y][x - 1] + img[y][x] + img[y][x + 1]
+        for y in range(janela, altura - janela):
+            for x in range(janela, largura - janela):
+                # blue
+                h[y][x][0] = sum(img[y, x - janela : x + janela + 1, 0]) / shape
+                # green
+                h[y][x][1] = sum(img[y, x - janela : x + janela + 1, 1]) / shape
+                # red
+                h[y][x][2] = sum(img[y, x - janela : x + janela + 1, 2]) / shape
+
+        for y in range(1, altura - 1):
+            for x in range(1, largura - 1):
+                v[y][x][0] = sum(h[y - janela : y + janela + 1, x, 0]) / shape
+                v[y][x][1] = sum(h[y - janela : y + janela + 1, x, 1]) / shape
+                v[y][x][2] = sum(h[y - janela : y + janela + 1, x, 2]) / shape
+
+        return v
 
 
 if __name__ == "__main__":
     img = cv2.imread(INPUT_IMAGE).astype(np.float)
     img = cv2.normalize(img, None, 0.0, 1.0, cv2.NORM_MINMAX)
 
-    img_blur = Ingenuo.blur(img)
-
+    tempo_inicio = datetime.now()
+    img_blur = Ingenuo.blur(img, shape=11)
+    tempo_total = datetime.now() - tempo_inicio
+    print(f"Tempo: {tempo_total}")
     salvar_imagem("com blur.jpg", img_blur)
+
+    tempo_inicio = datetime.now()
+    img_blur = Separavel.blur(img, shape=11)
+    tempo_total = datetime.now() - tempo_inicio
+    print(f"Tempo: {tempo_total}")
+    salvar_imagem("com blur separado.jpg", img_blur)
