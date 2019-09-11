@@ -81,11 +81,54 @@ class Separavel:
         return v
 
 
+class ImagemIntegral:
+    @staticmethod
+    def blur(img, shape=3):
+        img_integral = np.zeros(img.shape, dtype=np.float64)
+        new_img = np.zeros(img.shape)
+
+        altura, largura, canais = img.shape
+        janela = shape // 2
+
+        # Para cada linha Y
+        for y in range(0, altura):
+            # Copia o valor da primeira coluna da linha analisada
+            img_integral[y][0][0] = img[y][0][0]
+            img_integral[y][0][1] = img[y][0][1]
+            img_integral[y][0][2] = img[y][0][2]
+            # Para cada coluna fora a primeira
+            for x in range(1, largura):
+                # Pixel na Integral recebe o pixel original da imagem com o da coluna anterior (já da imagem integral)
+                img_integral[y][x][0] = img[y][x][0] + img[y][x - 1][0]
+                img_integral[y][x][1] = img[y][x][1] + img[y][x - 1][1]
+                img_integral[y][x][2] = img[y][x][2] + img[y][x - 1][2]
+
+        # Para cada linha Y fora a primeira
+        for y in range(1, altura):
+            # Para cada coluna
+            for x in range(0, largura):
+                # Para cada canal
+                for canal in range(0, canais):
+                    img_integral[y][x][canal] += img_integral[y - 1][x][canal]
+
+        for y in range(janela, altura - janela):
+            for x in range(janela, largura - janela):
+                for canal in range(0, canais):
+                    new_img[y][x][canal] = (
+                        img_integral[y - janela - 1][x - janela - 1][canal]  # A
+                        - img_integral[y - janela - 1][x + janela][canal]  # B
+                        - img_integral[y + janela][x - janela - 1][canal]  # C
+                        + img_integral[y + janela][x + janela][canal]
+                    ) / (janela ** 2)
+
+        return new_img
+
+
 if __name__ == "__main__":
     img = cv2.imread(INPUT_IMAGE).astype(np.float)
     img = cv2.normalize(img, None, 0.0, 1.0, cv2.NORM_MINMAX)
 
-    tempo_inicio = datetime.now()
+    """ tempo_inicio = datetime.now()
     img_blur = Ingenuo.blur(img, shape=11)
     tempo_total = datetime.now() - tempo_inicio
     print(f"Tempo: {tempo_total}")
@@ -95,4 +138,10 @@ if __name__ == "__main__":
     img_blur = Separavel.blur(img, shape=11)
     tempo_total = datetime.now() - tempo_inicio
     print(f"Tempo: {tempo_total}")
-    salvar_imagem("com blur separado.jpg", img_blur)
+    salvar_imagem("com blur separado.jpg", img_blur) """
+
+    tempo_inicio = datetime.now()
+    img_blur = ImagemIntegral.blur(img, shape=3)
+    tempo_total = datetime.now() - tempo_inicio
+    print(f"Tempo: {tempo_total}")
+    salvar_imagem("com blur img integral.jpg", img_blur)
