@@ -84,6 +84,9 @@ class Separavel:
 class ImagemIntegral:
     @staticmethod
     def blur(img, shape=3):
+        if shape % 2 == 0:
+            raise ValueError("O shape da janela precisa ser ímpar!")
+
         img_integral = np.zeros(img.shape, dtype=np.float64)
         new_img = np.zeros(img.shape)
 
@@ -92,16 +95,13 @@ class ImagemIntegral:
 
         # Para cada linha Y
         for y in range(0, altura):
+            for canal in range(0, canais):
             # Copia o valor da primeira coluna da linha analisada
-            img_integral[y][0][0] = img[y][0][0]
-            img_integral[y][0][1] = img[y][0][1]
-            img_integral[y][0][2] = img[y][0][2]
-            # Para cada coluna fora a primeira
-            for x in range(1, largura):
-                # Pixel na Integral recebe o pixel original da imagem com o da coluna anterior (já da imagem integral)
-                img_integral[y][x][0] = img[y][x][0] + img[y][x - 1][0]
-                img_integral[y][x][1] = img[y][x][1] + img[y][x - 1][1]
-                img_integral[y][x][2] = img[y][x][2] + img[y][x - 1][2]
+                img_integral[y][0][canal] = img[y][0][canal]
+                # Para cada coluna fora a primeira
+                for x in range(1, largura):
+                    # Pixel na Integral recebe o pixel original da imagem com o da coluna anterior (já da imagem integral)
+                    img_integral[y][x][canal] = img[y][x][canal] + img_integral[y][x - 1][canal]
 
         # Para cada linha Y fora a primeira
         for y in range(1, altura):
@@ -111,15 +111,49 @@ class ImagemIntegral:
                 for canal in range(0, canais):
                     img_integral[y][x][canal] += img_integral[y - 1][x][canal]
 
-        for y in range(janela, altura - janela):
-            for x in range(janela, largura - janela):
+        # Aplicando o filtro nas margens
+        for y in range(0, altura):
+            for x in range(0, largura):
                 for canal in range(0, canais):
-                    new_img[y][x][canal] = (
-                        img_integral[y - janela - 1][x - janela - 1][canal]  # A
-                        - img_integral[y - janela - 1][x + janela][canal]  # B
-                        - img_integral[y + janela][x - janela - 1][canal]  # C
-                        + img_integral[y + janela][x + janela][canal]
-                    ) / (janela ** 2)
+                    if (
+                        y < janela + 1
+                        or x < janela + 1
+                        or y + 1 > altura - janela
+                        or x + 1 > largura - janela
+                    ):
+                        y_aux = janela # 0
+                        x_aux = janela # 4
+                        # Primeira linha acima fora da janela
+                        if y < y_aux + 1:
+                            y_aux = y
+                        # Primeira linha abaixo fora da janela
+                        if y + 1 > altura - y_aux:
+                            y_aux = altura - y - 1
+                        # Primeira coluna à esquerda fora da janela
+                        if x < x_aux + 1:
+                            x_aux = x
+                        # Primeira coluna à direita fora da janela
+                        if x + 1 > largura - x_aux:
+                            x_aux = largura - x - 1
+
+                        # Cria uma janelinha
+                        divisor = ((y_aux * 2) + 1) * ((x_aux * 2) + 1)
+
+                        #Atualiza o pixel na imagem
+                        new_img[y][x][canal] = (
+                            img_integral[y - y_aux][x - x_aux][canal]  # A
+                            - img_integral[y - y_aux][x + x_aux][canal]  # B
+                            - img_integral[y + y_aux][x - x_aux][canal]  # C
+                            + img_integral[y + y_aux][x + x_aux][canal]  # D
+                        ) / divisor
+                    else:
+                        # Usa o cálculo com o tamanho da janela normal
+                        new_img[y][x][canal] = (
+                            img_integral[y - janela - 1][x - janela - 1][canal]  # A
+                            - img_integral[y - janela - 1][x + janela][canal]  # B
+                            - img_integral[y + janela][x - janela - 1][canal]  # C
+                            + img_integral[y + janela][x + janela][canal]  # D
+                        ) / shape ** 2
 
         return new_img
 
@@ -128,7 +162,7 @@ if __name__ == "__main__":
     img = cv2.imread(INPUT_IMAGE).astype(np.float)
     img = cv2.normalize(img, None, 0.0, 1.0, cv2.NORM_MINMAX)
 
-    """ tempo_inicio = datetime.now()
+    tempo_inicio = datetime.now()
     img_blur = Ingenuo.blur(img, shape=11)
     tempo_total = datetime.now() - tempo_inicio
     print(f"Tempo: {tempo_total}")
@@ -138,10 +172,10 @@ if __name__ == "__main__":
     img_blur = Separavel.blur(img, shape=11)
     tempo_total = datetime.now() - tempo_inicio
     print(f"Tempo: {tempo_total}")
-    salvar_imagem("com blur separado.jpg", img_blur) """
+    salvar_imagem("com blur separado.jpg", img_blur)
 
     tempo_inicio = datetime.now()
-    img_blur = ImagemIntegral.blur(img, shape=3)
+    img_blur = ImagemIntegral.blur(img, shape=11)
     tempo_total = datetime.now() - tempo_inicio
     print(f"Tempo: {tempo_total}")
     salvar_imagem("com blur img integral.jpg", img_blur)
