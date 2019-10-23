@@ -151,11 +151,57 @@ def show_cluster_values(cluster):
         print(f"{color} {hue_range}\t: {c.hue_mean} \t| {c.sat_mean} \t| {c.v_mean}")
 
 
+def simple_mask(img, background, hsv, lower_green, upper_green):
+    mask = cv2.inRange(hsv, lower_green, upper_green)
+    mask_3d = np.zeros(img.shape, dtype=np.uint8)
+    for ch in range(img.shape[2]):
+        mask_3d[:, :, ch] = mask[:, :]
+
+    output = np.zeros(img.shape, dtype=np.uint8)
+    output[:, :, :] = np.where(mask_3d == 0, img, background)
+
+    return output
+
+
+def weighted_mask(img, background, hsv, lower_green, upper_green):
+    height, width, channels = img.shape
+    mask = np.full((height, width), 1, dtype=np.uint8)
+
+    for y in range(height):
+        for x in range(width):
+            valid = True
+            for ch in range(channels):
+                if not (
+                    hsv[y, x, ch] >= lower_green[ch]
+                    and hsv[y, x, ch] <= upper_green[ch]
+                ):
+                    valid = False
+                    break
+            if valid:
+                mask[y, x] = 0
+
+    print("Calculando os pesos...")
+    alpha_mask = np.zeros((height, width), dtype=np.float32)
+    alpha_mask = cv2.GaussianBlur(mask, (5, 5), 0)
+
+    bg_weights = np.zeros((height, width), dtype=np.float32)
+    bg_weights[:, :] = 1 - alpha_mask[:, :]
+    img_weights = np.zeros((height, width), dtype=np.float32)
+    img_weights[:, :] = 1 - bg_weights[:, :]
+
+    output = np.full(img.shape, 255, dtype=np.uint8)
+    for ch in range(channels):
+        output[:, :, ch] = (img_weights[:, :] * img[:, :, ch]) + (
+            bg_weights[:, :] * background[:, :, ch]
+        )
+
+    return output
+
+
 for i in range(9):
-    print(f"Imagem {i}")
+    print(f"Processando imagem {i}...")
 
     img = cv2.imread(f"img/{i}.bmp").astype(np.uint8)
-    # img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
     background = cv2.imread("img/fundo.bmp").astype(np.uint8)
     background = cv2.resize(
         background, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_AREA
@@ -164,6 +210,7 @@ for i in range(9):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     cluster = HsvCluster()
 
+    print("Clusterizando...")
     height, width, channels = hsv.shape
     for y in range(height):
         for x in range(width):
@@ -180,17 +227,9 @@ for i in range(9):
     lower_green = np.array([60 - sensitividade, 50, 50])
     upper_green = np.array([60 + sensitividade, 255, 255])
 
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-    mask_3d = np.zeros(img.shape, dtype=np.uint8)
-    for ch in range(channels):
-        mask_3d[:, :, ch] = mask[:, :]
+    print("Combinando...")
+    output = simple_mask(img, background, hsv, lower_green, upper_green)
 
-    output = np.full(img.shape, 255, dtype=np.uint8)
-    output[:, :, :] = np.where(mask_3d == 0, img, background)
-
-    print(f"Writing image {i}...")
-    cv2.imwrite(f"resultados/{i} - interm.png", output)
-    # cv2.imshow(f"Output {i}", output)
-    # cv2.waitKey(0)
-
-cv2.destroyAllWindows()
+    print(f"Salvando imagem...")
+    print("-----")
+    cv2.imwrite(f"res/{i}.png", output)
