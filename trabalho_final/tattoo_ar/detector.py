@@ -125,3 +125,13 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                 setattr(matched_coords, 'bottom', line)
             elif shape_line is None:
                 draw_line(frame, line, RED)
+
+
+def scale_detection(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation=15):
+    # target_coords = coordenadas vistas por última. Em run.py, é a variável coords!
+    # matched_coords = coordenadas atuais e que estão sendo renderizadas. Em run.py, é a classe estática Shape!
+    
+    # Precisa setar em matched_coords as linhas do "retangulo"
+    # Ou seja, matched_coords.left, matched_coords.right e matched_coords.bottom
+    
+    pass

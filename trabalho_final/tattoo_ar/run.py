@@ -3,7 +3,7 @@ import numpy as np
 import time
 
 from .colors import BLUE, GOLD, RED
-from .detector import hough_detection, match_line_with_shape
+from .detector import hough_detection, match_line_with_shape, scale_detection
 from .mask import Shape, get_mask_coordinates
 from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges
 
@@ -45,12 +45,38 @@ def run():
             coords = get_mask_coordinates(frame)
             set_mask_coords = False
 
-        lines = hough_detection(frame, edges)
-        for line in lines:
-            # Na classe Shape é que vamos setar o que foi encontrado!
-            # Como ela só tem atributos de classe, não estamos instanciando um objeto,
-            # então não vai "perder" os valores entre um frame e outro
-            match_line_with_shape(frame, line, coords, Shape)
+        if Shape.detected() is False:
+            lines = hough_detection(frame, edges)
+            for line in lines:
+                # Na classe Shape é que vamos setar o que foi encontrado!
+                # Como ela só tem atributos de classe, não estamos instanciando um objeto,
+                # então não vai "perder" os valores entre um frame e outro
+                match_line_with_shape(frame, line, coords, Shape)
+        else:
+            y_start = Shape.y_start()
+            y_end = Shape.y_end()
+            x_start = Shape.left.x
+            x_end = Shape.right.x
+            template = frame[y_start:y_end, x_start:x_end]
+            width_t, height_t, ch = template.shape
+
+            dif = np.zeros(template.shape)
+            width, height, ch = frame.shape
+            last_y = 0
+            last_x = 0            
+
+            while last_y < height:
+                for y, y2 in zip(range(last_y, height), range(height_t)):
+                    while last_x < width:
+                        for x, x2 in zip(range(last_x, width), range(width_t)):
+                            for ch in range(ch):
+                                # Computaria diferenças???
+                                dif[y, x, ch] = abs(frame[y2, x2, ch] - template[y2, x2, ch])
+                                
+                        last_x = last_x + 10
+
+                last_y = last_y + 10
+
 
         TIME_COUNTER = TIME_COUNTER + 1
         if TIME_COUNTER % 20 == 0:
