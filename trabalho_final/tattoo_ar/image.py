@@ -37,8 +37,7 @@ def hsv_edges(hsv, threshold_1=80, threshold_2=200):
 
 def draw_line(image, line, color, thickness=5):
     cv2.line(image, line.start, line.end, color, thickness)
-
-
+ 
 def draw_lines(image, lines, color, thickness=5):
     for line in lines:
         draw_line(image, line, color, thickness)
@@ -53,6 +52,7 @@ def tattoo_image(size):
     return alpha
 
 def draw_tattoo(frame, shape: Shape):
+    # Se todas as linhas do shape foram encontradas
     if shape.left and shape.right and shape.bottom:
         # lines = [shape.left, shape.right, shape.bottom]
         # draw_lines(frame, lines, GOLD)

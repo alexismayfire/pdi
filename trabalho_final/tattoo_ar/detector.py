@@ -8,7 +8,7 @@ from .image import draw_line
 from .mask import Line
 
 
-def hough_detection(frame, edges):
+def hough_detection(frame, edges, min_line_length):
     # Aqui tentando identificar aquele mesmo símbolo do InkHunter: |_|
     # Thresh acima de 100 ja dificulta pra encontrar
     thresh = 40
@@ -16,7 +16,7 @@ def hough_detection(frame, edges):
     # Esse valor aparentemente é fixo no InkHunter, se você não encaixar
     # certinho na sobreposição do símbolo não acha.
     # Então precisa definir um valor bacana aqui pra ajudar no Hough!
-    min_line_length = 80
+    #min_line_length = 80
 
     # Um line gap maior exibe melhor somente as linhas que interessam.
     # Se diminuir e tiver uma "falha" no Canny (ou qualquer outro algoritmo
@@ -36,7 +36,7 @@ def hough_detection(frame, edges):
     return lines
 
 
-def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation=15):
+def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation):
     left_line, right_line, bottom_line = target_coords
 
     if line.vertical(max_deviation):
