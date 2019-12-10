@@ -53,30 +53,103 @@ def run():
                 # então não vai "perder" os valores entre um frame e outro
                 match_line_with_shape(frame, line, coords, Shape)
         else:
-            y_start = Shape.y_start()
-            y_end = Shape.y_end()
-            x_start = Shape.left.x
-            x_end = Shape.right.x
-            template = frame[y_start:y_end, x_start:x_end]
-            width_t, height_t, ch = template.shape
+            # TODO: força bruta de Hough aqui
+            # Manipular coords de acordo com a necessidade
+            # Salvar o coords em uma auxiliar
+            # 
+            # aux = coords
+            # 
+            # 1. Deslocou pra esquerda:
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Diminuir o x1 e x2 de aux[0], aux[1] e aux[2] em N pixels (move todas pra esquerda)
+            #   c. Chamar match_line_with_shape(frame, line, aux, Shape)
+            # 
+            # 2. Se Shape.detected(), sai do else, se não, aux = coords para resetar
+            # 
+            # 3. Deslocou pra direita
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Incrementar o x1 e x2 de aux[0], aux[1] e aux[2] em N pixels (move todas pra direita)
+            #   c. Chamar match_line_with_shape(frame, line, aux, Shape)
+            # 
+            # 4. Se Shape.detected(), sai do else, se não, aux = coords para resetar
+            # 
+            # 5. Deslocou pra baixo
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Incrementar o y1 e y2 de aux[0], aux[1] e aux[2] em N pixels (move todas pra baixo)
+            #   c. Chamar match_line_with_shape(frame, line, aux, Shape)
+            #
+            # 6. Se Shape.detected(), sai do else, se não, aux = coords para resetar
+            #
+            # 7. Deslocou pra cima
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Diminuir o y1 e y2 de aux[0], aux[1] e aux[2] em N pixels (move todas pra cima)
+            #   c. Chamar match_line_with_shape(frame, line, aux, Shape)
+            # 
+            # 8. Se Shape.detected(), sai do else, se não, aux = coords para resetar
+            # 
+            # 9. Aumentou a escala
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Diminuir o y1 (cima) e incrementar o y2 (baixo) de aux[0] e aux[1] (left e right) em N pixels (aumenta o comprimento das linhas verticais)
+            #       I. Isso é possível porque y1 sempre será o MENOR valor da coordenada em Y da linha, ou seja, o valor mais próximo da margem superior da imagem
+            #       II. E, consequentemente, y2 sempre será o MAIOR valor da coordenada em Y da linha, ou seja, o valor mais próximo da margem inferior da imagem
+            #       III. Ver o construtor da classe Line, em mask.py. Tem um if antes de setar os valores, pra sempre colocar em x1/y1 o menor valor e em x2/y2 o maior!
+            #   c. Diminuir o x1 e x2 de aux[0] em N pixels (move a left pra esquerda)
+            #   d. Incrementar o x1 e x2 de aux[1] em N pixels (move a right pra direita)
+            #   e. Incrementar o x1 e x2 de aux[2] em N pixels (aumenta o comprimento da bottom)
+            #   f. Incrementar o y1 e y2 de aux[2] em N pixels (move a bottom pra baixo)
+            #   g. Chamar match_line_with_shape(frame, line, aux, Shape)
+            #
+            # 10. Se Shape.detected(), sai do else, se não, aux = coords para resetar
+            #
+            # 11. Diminuiu a escala
+            #   a. Setar o Shape.left, Shape.right e Shape.bottom pra None
+            #   b. Incrementar o y1 (cima) e diminuir o y2 (baixo) de aux[0] e aux[1] (left e right) em N pixels (diminui o comprimento das linhas verticais)
+            #   c. Incrementar o x1 e x2 de aux[0] (left) em N pixels (move a left pra direita)
+            #   d. Diminuir o x1 e x2 de aux[1] (right) em N pixels (move a right pra esquerda)
+            #   e. Diminuir o x1 e x2 de aux[2] em N pixels (diminui o comprimento da bottom)
+            #   f. Diminuir o y1 e y2 de aux[2] em N pixels (move a bottom pra cima)
+            #   g. Chamar match_line_with_shape(frame, line, aux, Shape)
+            #   
+            # Um dos problemas: checar (com print) se aux está resetando para o valor original de coords
+            # Em alguns casos, quando se faz a associação (aux = coords), pode ser que a variável receba um ponteiro... Python + C, não lembro os casos!
+            # Como coords é associada a uma nova lista depois de chamar draw_tattoo() abaixo, dessa forma:
+            #   coords = [Shape.left, Shape.right, Shape.bottom]
+            # Isso não deveria acontecer. A forma como estou criando a lista é para que sempre seja uma nova área de memória sempre!
+            # 
+            # Diagonal??? Rotação???
+            #   
+            #   Diagonal poderia fazer passos similares, manipulando as coordenadas e usando match_line_with_shape
+            #   
+            #   Rotação precisa de outra ideia, e a match_line_with_shape tem aquelas verificações de line.vertical() e line.horizontal().
+            #   Talvez role de usar algo parecido, mas aí usando esses métodos para excluir linhas verticais e horizontais do teste.
+            #   Um outro problema com a rotação é como vamos desenhar a tatuagem.
+            #   Usando o Geogebra porque fica melhor de visualizar, na imagem só vai ser "invertido" né, porque está de ponta cabeça.
 
-            dif = np.zeros(template.shape)
-            width, height, ch = frame.shape
-            last_y = 0
-            last_x = 0            
+            #   Por exemplo, uma linha esquerda rotacionada poderia ser: [(100, 100), (140, 20)]
+            #   Ou seja, uma linha que tem 80 pixels de "comprimento" abs(y2 - y1), e está assim: \
 
-            while last_y < height:
-                for y, y2 in zip(range(last_y, height), range(height_t)):
-                    while last_x < width:
-                        for x, x2 in zip(range(last_x, width), range(width_t)):
-                            for ch in range(ch):
-                                # Computaria diferenças???
-                                dif[y, x, ch] = abs(frame[y2, x2, ch] - template[y2, x2, ch])
-                                
-                        last_x = last_x + 10
-
-                last_y = last_y + 10
-
+            #   Digamos agora que a linha direita que combina poderia ser: [(160, 140), (200, 60)]
+            #   Mesmo "comprimento", abs(y2 - y1) = 80 (na verdade não é, porque tem a inclinação)
+            # 
+            #   E a de baixo, que "fecha" com elas, seria: [(140, 20), (200, 60)]
+            #   https://i.imgur.com/UyE5YMI.png
+            #   
+            #   COMO A GENTE VAI ITERAR NISSO??? Tem que iterar na diagonal!
+            #
+            #   Porque o ponto (0, 0) da tatuagem tem que ser escrito em (100, 100) -> de novo, usando as coordenadas do Geogebra pra facilitar
+            #   Já o ponto (0, 1) tem que ser escrito em... (101, 101)??? depende da inclinação. Se ela estiver rotacionada 90 graus é fácil...
+            #   Caso contrário... https://www.geeksforgeeks.org/program-find-line-passing-2-points/
+            #   No exemplo ali do Geogebra, a solução seria f(x, y) = 40x - 60y, ou em equação de reta: y = (40x + 2000) / 60
+            #   Quando passamos para essa fórmula os valores (100, 100) no Geogebra (começo do shape encontrado, parte esquerda superior), temos isso:
+            #   https://i.imgur.com/b2yZgwW.png
+            #
+            #   Ou seja, essa linha laranja tem que ser seguida na primeira iteração. Como dá pra ver, Y e X não estão variando linearmente!
+            #   Como a inclinação é positiva, sabemos que precisa ir diminuindo o Y (agora pensando nos termos da imagem mesmo) à medida que aumenta o X
+            #   Porém, nesse caso, quando vamos um pixel pra direita:
+            #   https://i.imgur.com/TrAOqLL.png
+            #
+            #   Tem que fazer arredondamentos. Porque quando X = 101, Y = 100.6 ali no Geogebra.
+            #   Ou seja... vai ser MUITO mais difícil trabalhar com rotação!
 
         TIME_COUNTER = TIME_COUNTER + 1
         if TIME_COUNTER % 20 == 0:
