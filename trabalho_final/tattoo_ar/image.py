@@ -101,13 +101,12 @@ def draw_tattoo(frame, shape: Shape):
 def draw_tattoo_somehow(frame, all_lines):
 
     # Left , Rigth, Bottom
-    # print('All Lines:', all_lines[0], '|',all_lines[1], '|',all_lines[2])
+    print('All Lines:', all_lines[0], '|',all_lines[1], '|',all_lines[2])
 
     aux = all_lines.copy()
 
     # Só a Bottom
-    if aux[0] is None and aux[1] is None and aux[2] is not None:
-        # print('Só Bottom')
+    if aux[0] is None and aux[1] is None and aux[2] is not None:        
         # aux[0] = Line((x1, y1), (x2, y2))
         aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - 80))
         aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - 80))
@@ -116,10 +115,32 @@ def draw_tattoo_somehow(frame, all_lines):
         # cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
         # cv2.line(frame, aux[1].start, aux[1].end, (255,200,50), 15)
 
-        # print('Bottom', aux[2], 'Nova Esquerda:', aux[0], 'Nova Direita:', aux[1])
-        Shape.left = aux[0]
-        Shape.right = aux[1]
-        Shape.bottom = aux[2]
+    # Só a Right
+    if aux[0] is None and aux[1] is not None and aux[2] is None:
+        print('Só Right') 
+        aux[2] = Line((aux[1].x2 - 80, aux[1].y2), (aux[1].x2, aux[1].y2))
+        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - 80))
+
+        # Linhas Inferidas
+        # cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
+        # cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
+
+    # Só a Left
+    if aux[0] is not None and aux[1] is  None and aux[2] is None: 
+        print('Só Left') 
+        aux[2] = Line((aux[0].x2, aux[0].y2), (aux[0].x2 + 80, aux[0].y2))
+        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - 80))
+
+        # Linhas Inferidas
+        # cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
+        # cv2.line(frame, aux[1].start, aux[1].end, (255,200,50), 15)
+        
+
+    # print('Bottom', aux[2], 'Nova Esquerda:', aux[0], 'Nova Direita:', aux[1])
+    Shape.left = aux[0]
+    Shape.right = aux[1]
+    Shape.bottom = aux[2]
+
     '''    
     # Ponto Médio
     Line.x = (self.x1 + self.x2) // 2

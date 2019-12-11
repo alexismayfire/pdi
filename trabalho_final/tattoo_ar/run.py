@@ -199,22 +199,39 @@ def run():
         # print('Shape:', Shape.left, '|',Shape.right, '|',Shape.bottom)
         # print('Coords:', coords[0], '|', coords[1], '|', coords[2])
         
+        draw_lines(frame, mask_coords, BLUE)
+
+        #Desenha a última shape encontrada usando coords
+        cv2.line(frame, coords[0].start, coords[0].end, (255,200,50), 5)
+        cv2.line(frame, coords[1].start, coords[1].end, (255,200,50), 5)
+        cv2.line(frame, coords[2].start, coords[2].end, (255,200,50), 5)
+        draw_tattoo(frame, coords)
+    
         # Desenha o shape inicial na imagem capturada
         if Shape.detected():
             draw_tattoo(frame, Shape)
             coords = [Shape.left, Shape.right, Shape.bottom]
+            
+            #Desenha a última shape encontrada usando coords
+            #cv2.line(frame, Shape.left.start, Shape.left.end, (255,200,50), 15)
+            #cv2.line(frame, Shape.right.start, Shape.right.end, (255,200,50), 15)
+            #cv2.line(frame, Shape.bottom.start, Shape.bottom.end, (255,200,50), 15)
+
+            cv2.putText(frame, "B:" + str(Shape.bottom), (Shape.bottom.x1, Shape.bottom.y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+
         elif Shape.any():
-            #draw_tattoo(frame, coords)
             aux = [Shape.left, Shape.right, Shape.bottom]
             draw_tattoo_somehow(frame, aux)
+            draw_tattoo(frame, coords)
         else:
             if coords is not None:
                 draw_tattoo(frame, coords)
             else:           
                 draw_lines(frame, mask_coords, BLUE)
+                draw_tattoo(frame, coords)
 
         TIME_COUNTER = TIME_COUNTER + 1
-        if TIME_COUNTER % 5 == 0:
+        if TIME_COUNTER % 1 == 0:
             '''
             # TODO: como resetar coords??
             if Shape.detected():
