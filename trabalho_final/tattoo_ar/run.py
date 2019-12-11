@@ -1,10 +1,12 @@
+from datetime import datetime
+import time
+
 import cv2
 import numpy as np
-import time
 
 from .colors import BLUE, GOLD, RED
 from .detector import hough_detection, match_line_with_shape, scale_detection
-from .mask import Shape, get_mask_coordinates
+from .mask import Line, Shape, get_mask_coordinates
 from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges
 
 
@@ -24,7 +26,13 @@ def run():
     # Deve guardar sempre a última coordenada identificada da shape, ou seja,
     # deve ser um vetor com 3 Line, na forma: [LEFT_LINE, RIGHT_LINE, BOTTOM_LINE]
     coords = None
+    coords_fallback = False
     TIME_COUNTER = 1
+    LAST_DETECTION = 0
+    MIN_LINE_LENGHT = 40
+    DEVIATION_ALLOWED = 25
+
+    start_time = datetime.now()
 
     # A cada frame processado
     while True:
@@ -36,6 +44,8 @@ def run():
         hsv = frame_to_hsv(frame)
         edges = hsv_edges(hsv)
 
+        TIME_COUNTER = TIME_COUNTER + 1
+
         # Na primeira iteração, esse valor é verdadeiro
         # Precisamos disso apenas porque somente dentro do laço
         # vamos ter acesso ao frame, para executar a get_mask_coordinates
@@ -45,14 +55,47 @@ def run():
             coords = get_mask_coordinates(frame)
             set_mask_coords = False
 
-        if Shape.detected() is False:
-            lines = hough_detection(frame, edges)
+        lines = hough_detection(frame, edges, MIN_LINE_LENGHT)
+
+        if not Shape.detected():
             for line in lines:
                 # Na classe Shape é que vamos setar o que foi encontrado!
                 # Como ela só tem atributos de classe, não estamos instanciando um objeto,
-                # então não vai "perder" os valores entre um frame e outro
-                match_line_with_shape(frame, line, coords, Shape)
+                # então não vai "perder" os valores entre um frame e outro                
+                match_line_with_shape(frame, line, coords, Shape, DEVIATION_ALLOWED)
+                if Shape.detected():
+                    print('detectou direto')
+                # cv2.line(frame, line.start, line.end, GREEN, 10)
+
         else:
+            coords = [
+                Line(Shape.left.start, Shape.left.end), 
+                Line(Shape.right.start, Shape.right.end),
+                Line(Shape.bottom.start, Shape.bottom.end),
+            ]
+
+            # https://stackoverflow.com/questions/2612802/how-to-clone-or-copy-a-list
+            # Quando você atribui uma lista, Python só passa o ponteiro para ela
+            # Para copiar para uma nova lista, tem que usar o .copy() sempre!
+            aux = coords.copy()
+            print(f"Entrou no deslocamento: {datetime.now().strftime('%H:%M:%S')}")
+            print('Shape:\t', Shape.left, Shape.right, Shape.bottom)
+            Shape.reset()
+
+            PIXELS_VARIATION = 5
+
+            for i in range(len(aux)):
+                aux[i].x1 -= PIXELS_VARIATION
+                aux[i].x2 -= PIXELS_VARIATION
+
+            print('Aux:\t',aux[0], aux[1], aux[2])
+
+            for line in lines:
+                match_line_with_shape(frame, line, aux, Shape, DEVIATION_ALLOWED)
+
+            print('Shape:\t', Shape.left, Shape.right, Shape.bottom)
+            if Shape.detected():
+                print('Deslocamento funcionou')
             # TODO: força bruta de Hough aqui
             # Manipular coords de acordo com a necessidade
             # Salvar o coords em uma auxiliar
@@ -151,24 +194,31 @@ def run():
             #   Tem que fazer arredondamentos. Porque quando X = 101, Y = 100.6 ali no Geogebra.
             #   Ou seja... vai ser MUITO mais difícil trabalhar com rotação!
 
-        TIME_COUNTER = TIME_COUNTER + 1
-        if TIME_COUNTER % 20 == 0:
-            # TODO: como resetar coords??
-            if Shape.detected():
-                if TIME_COUNTER % 600 == 0:
-                    print(f'RESETOU AS COORDENADAS INICIAIS | TIMER: {TIME_COUNTER}')
-                    coords = mask_coords
-                else:
-                    coords = [Shape.left, Shape.right, Shape.bottom]
-            Shape.left = None
-            Shape.right = None
-            Shape.bottom = None
-
         # Desenha o shape inicial na imagem capturada
         if Shape.detected():
+            print('Desenhou shape direto')
+            LAST_DETECTION += 1
             draw_tattoo(frame, Shape)
-            coords = [Shape.left, Shape.right, Shape.bottom]
+            coords = [
+                Line(Shape.left.start, Shape.left.end),
+                Line(Shape.right.start, Shape.right.end), 
+                Line(Shape.bottom.start, Shape.bottom.end),
+            ]
+            # Shape.reset()
+        elif LAST_DETECTION < 5 and coords[0] != mask_coords[0] and coords[1] != mask_coords[1] and coords[2] != mask_coords[2]:
+            LAST_DETECTION += 1
+            Shape.set_coords(coords)
+            draw_tattoo(frame, Shape)
+            Shape.reset()
+        elif TIME_COUNTER % 50 == 0:
+            print(f"RESETOU TIMER: {datetime.now().strftime('%H:%M:%S')}")
+            LAST_DETECTION = 0
+            Shape.reset()
+            coords = mask_coords
+            draw_lines(frame, mask_coords, BLUE) 
         else:
+            LAST_DETECTION = 0
+            coords = mask_coords
             draw_lines(frame, mask_coords, BLUE)
 
         height, width, channels = frame.shape

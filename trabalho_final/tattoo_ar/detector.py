@@ -79,7 +79,8 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                     # Se não der resultado, vai tentar ver se não é a da direita
                     setattr(matched_coords, orientation, line)
                 elif shape_line is None:
-                    draw_line(frame, line, RED)
+                    # draw_line(frame, line, RED)
+                    pass
 
     elif line.horizontal(max_deviation):
         lower_x = bottom_line.x1
@@ -124,7 +125,8 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                 # de acordo com orientation
                 setattr(matched_coords, 'bottom', line)
             elif shape_line is None:
-                draw_line(frame, line, RED)
+                # draw_line(frame, line, RED)
+                pass
 
 
 def scale_detection(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation=15):

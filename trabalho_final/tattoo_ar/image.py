@@ -9,10 +9,10 @@ def frame_to_hsv(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     background = np.zeros(frame.shape, dtype=np.uint8)
     
-    sensitivity = 20
+    sensitivity = 30
 
     # Range de cores - limite inferior
-    lower_range = np.array([110 - sensitivity, 50, 50])
+    lower_range = np.array([110 - sensitivity, 70, 50])
 
     # Range do azul - limite superior
     upper_range = np.array([130 + sensitivity, 255, 255])
@@ -28,11 +28,34 @@ def frame_to_hsv(frame):
 
     # Agora, com o np.where retornamos o background onde a 
     # máscara não está setada, e o frame original caso esteja
-    return np.where(mask_3_channels == 0, background, frame)
+    masked_hsv = np.where(mask_3_channels == 0, background, hsv)
+    return masked_hsv
 
 
 def hsv_edges(hsv, threshold_1=80, threshold_2=200):
-    return cv2.Canny(hsv, threshold_1, threshold_2)
+    width, height, _ = hsv.shape
+
+    # Aqui, np.where vai retornar uma matriz com 3 'canais',
+    # setando [cmp, cmp, cmp] de acordo com o resultado da comparação
+    # Ou seja, no ponto hsv[a, b, c]:
+    #   - O valor de H >= 10
+    #   - O valor de S >= 10
+    #   - O valor de V >= 0
+    # Então, binarized[a, b, c] = [255, 255, 255]
+    # Agora, caso hsv[a, b, c] seja:
+    #   - O valor de H < 10
+    #   - O valor de S < 10
+    #   - O valor de V >= 0
+    # Então, binarized[a, b, c] = [0, 0, 255]
+    # Como estamos mais interessados no Hue, então usamos ele abaixo no retorno
+    # Lembrando que o parâmetro 'hsv' aqui já vem filtrado previamente, 
+    # com frequências de azul, e é por isso que podemos usar [10, 10, 0]
+    # OBS: por alguma razão, o V sempre vem 0 da frame_to_hsv()...
+    binarized = np.where(hsv >= np.array([10, 10, 0]), 255, 0)
+
+    # Como Hough aceita imagens 8UC1, ou seja, 8bpp, unsigned e 1 canal,
+    # pegamos apenas o primerio canal e usa o cast para np.uint8
+    return binarized[:, :, 0].astype(np.uint8)
 
 
 def draw_line(image, line, color, thickness=5):

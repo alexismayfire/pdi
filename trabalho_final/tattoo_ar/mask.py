@@ -28,6 +28,14 @@ class Line:
     def __str__(self):
         return f'[({self.x1}, {self.y1}), ({self.x2}, {self.y2})]'
 
+    def __eq__(self, other):
+        return (
+            self.x1 == other.x1 
+            and self.x2 == other.x2 
+            and self.y1 == other.y1 
+            and self.y2 == other.y2
+        )
+
     def horizontal(self, max_deviation) -> bool:
         return max_deviation > self.y_deviation and max_deviation < self.x_deviation
 
@@ -47,6 +55,18 @@ class Shape:
             return True
 
         return False
+
+    @classmethod
+    def reset(cls):
+        cls.left = None
+        cls.right = None
+        cls.bottom = None
+
+    @classmethod
+    def set_coords(cls, coords):
+        cls.left = coords[0]
+        cls.right = coords[1]
+        cls.bottom = coords[2]
 
     @classmethod
     def size(cls):
@@ -107,7 +127,7 @@ def get_mask_coordinates(frame):
         (col_right, row_bottom)
     )
 
-    return (left, right, bottom)
+    return [left, right, bottom]
 
 
 class Coordinates:
