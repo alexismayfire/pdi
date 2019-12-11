@@ -1,6 +1,9 @@
+# from scipy.spatial import distance as dist
+
 import cv2
 import numpy as np
 import time
+
 
 from .colors import BLUE, GOLD, RED, GREEN
 from .detector import hough_detection, match_line_with_shape, scale_detection
@@ -25,7 +28,7 @@ def run():
     # deve ser um vetor com 3 Line, na forma: [LEFT_LINE, RIGHT_LINE, BOTTOM_LINE]
     coords = None
     TIME_COUNTER = 1
-    MIN_LINE_LENGHT = 40
+    MIN_LINE_LENGHT = 60
     DEVIATION_ALLOWED = 25
 
     # A cada frame processado
@@ -217,7 +220,10 @@ def run():
             #cv2.line(frame, Shape.right.start, Shape.right.end, (255,200,50), 15)
             #cv2.line(frame, Shape.bottom.start, Shape.bottom.end, (255,200,50), 15)
 
-            cv2.putText(frame, "B:" + str(Shape.bottom), (Shape.bottom.x1, Shape.bottom.y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+            bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2))))           
+            cv2.putText(frame, "B:" + str(bottom_line_size), (Shape.bottom.x1, Shape.bottom.y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+            
+            # cv2.putText(frame, "B size:" + str(dist), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
 
         elif Shape.any():
             aux = [Shape.left, Shape.right, Shape.bottom]
