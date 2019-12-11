@@ -6,10 +6,9 @@ import time
 
 
 from .colors import BLUE, GOLD, RED, GREEN
-from .detector import hough_detection, match_line_with_shape, scale_detection
+from .detector import hough_detection, match_line_with_shape, angle_between
 from .mask import Line, Shape, get_mask_coordinates
 from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges, draw_tattoo_somehow
-
 
 def run():
     cap = cv2.VideoCapture(0)
@@ -220,8 +219,10 @@ def run():
             #cv2.line(frame, Shape.right.start, Shape.right.end, (255,200,50), 15)
             #cv2.line(frame, Shape.bottom.start, Shape.bottom.end, (255,200,50), 15)
 
-            bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2))))           
-            cv2.putText(frame, "B:" + str(bottom_line_size), (Shape.bottom.x1, Shape.bottom.y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+            bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2))))    
+            bottom_line_angle = int(angle_between((Shape.bottom.x1, Shape.bottom.y1), (Shape.bottom.x2, Shape.bottom.y2)))
+
+            cv2.putText(frame, "B:" + str(bottom_line_size) + "|" + str(bottom_line_angle), (Shape.bottom.x1, Shape.bottom.y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
             
             # cv2.putText(frame, "B size:" + str(dist), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
 

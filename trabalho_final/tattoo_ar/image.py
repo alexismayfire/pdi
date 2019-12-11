@@ -176,38 +176,5 @@ def draw_tattoo_somehow(frame, all_lines):
     # aux[2].horizontal(max_deviation=15) -> retorna True se for linha horizontal
     # aux[2].vertical(max_deviation=15) -> retorna True se for vertical
 
-
-    #Só a bottom
-    if aux[0] is None and aux[1] is None and aux[2] is not None:
-        print('Only Bottom')
-        aux[0][0] = (30,40)
-        aux[0][1] = (30,40)
-
-        #aux[1][0] = [(50,40), (30,40)]    
-    '''
-    '''
-    # Se todas as linhas do shape foram encontradas
-    if shape.left and shape.right and shape.bottom:
-        # lines = [shape.left, shape.right, shape.bottom]
-        # draw_lines(frame, lines, GOLD)
-
-        frame_y_range = range(Shape.y_start(), Shape.y_end())
-        frame_x_range = range(Shape.left.x, Shape.right.x)
-
-        tattoo = tattoo_image(shape.size())
-        tattoo_width, tattoo_height = tattoo.shape
-        tattoo_y_range = range(tattoo_width)
-        tattoo_x_range = range(tattoo_height)
-
-        for y, y2 in zip(frame_y_range, tattoo_y_range):
-            for x, x2 in zip(frame_x_range, tattoo_x_range):
-                if tattoo[y2, x2] == 0:
-                    frame[y, x] = np.array([
-                        tattoo[y2, x2], tattoo[y2, x2], tattoo[y2, x2]
-                    ])
-
-    '''
-
-
-        
+    '''   
 

@@ -131,12 +131,7 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                 #draw_line(frame, line, RED)
                 pass
 
-
-def scale_detection(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation=15):
-    # target_coords = coordenadas vistas por última. Em run.py, é a variável coords!
-    # matched_coords = coordenadas atuais e que estão sendo renderizadas. Em run.py, é a classe estática Shape!
-    
-    # Precisa setar em matched_coords as linhas do "retangulo"
-    # Ou seja, matched_coords.left, matched_coords.right e matched_coords.bottom
-    
-    pass
+def angle_between(p1, p2):
+    ang1 = np.arctan2(*p1[::-1])
+    ang2 = np.arctan2(*p2[::-1])
+    return np.rad2deg((ang1 - ang2) % (2 * np.pi))
