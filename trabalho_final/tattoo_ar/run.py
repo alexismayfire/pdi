@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 
-from .colors import BLUE, GOLD, RED
+from .colors import BLUE, GOLD, RED, GREEN
 from .detector import hough_detection, match_line_with_shape, scale_detection
 from .mask import Shape, get_mask_coordinates
 from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges
@@ -25,8 +25,8 @@ def run():
     # deve ser um vetor com 3 Line, na forma: [LEFT_LINE, RIGHT_LINE, BOTTOM_LINE]
     coords = None
     TIME_COUNTER = 1
-    MIN_LINE_LENGHT = 80
-    DEVIATION_ALLOWED = 15
+    MIN_LINE_LENGHT = 40
+    DEVIATION_ALLOWED = 25
 
     # A cada frame processado
     while True:
@@ -55,7 +55,9 @@ def run():
                 # Como ela só tem atributos de classe, não estamos instanciando um objeto,
                 # então não vai "perder" os valores entre um frame e outro                
                 match_line_with_shape(frame, line, coords, Shape, DEVIATION_ALLOWED)
-        else:
+                cv2.line(frame, line.start, line.end, GREEN, 10)
+        else:      
+
             # TODO: força bruta de Hough aqui
             # Manipular coords de acordo com a necessidade
             # Salvar o coords em uma auxiliar
@@ -182,7 +184,7 @@ def run():
 
 
         TIME_COUNTER = TIME_COUNTER + 1
-        if TIME_COUNTER % 20 == 0:
+        if TIME_COUNTER % 50 == 0:
             # TODO: como resetar coords??
             if Shape.detected():
                 if TIME_COUNTER % 600 == 0:
@@ -215,7 +217,8 @@ def run():
         cv2.imshow("Input", side)
         c = cv2.waitKey(1)
 
-        print(c)
+        # Tecla que está sendo pressionada
+        # print(c)
 
         # Valor ASCII do Left
         if c == 97: # A
@@ -234,6 +237,7 @@ def run():
         if c == 27:
             break
 
-    
+    print(coords)
+
     cap.release()
     cv2.destroyAllWindows()
