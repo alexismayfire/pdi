@@ -39,6 +39,7 @@ def hough_detection(frame, edges, min_line_length):
 def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation):
     left_line, right_line, bottom_line = target_coords
 
+    # target_coords são as coordenadas que vão ser usadas para comparação
     if line.vertical(max_deviation):
         for target_line, orientation in zip([left_line, right_line], ['left', 'right']):
             lower_x = target_line.x1 - max_deviation
@@ -79,7 +80,8 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                     # Se não der resultado, vai tentar ver se não é a da direita
                     setattr(matched_coords, orientation, line)
                 elif shape_line is None:
-                    draw_line(frame, line, RED)
+                    # Desenha todas as linhas verticais draw_line(frame, line, RED)
+                    pass
 
     elif line.horizontal(max_deviation):
         lower_x = bottom_line.x1
@@ -124,7 +126,8 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                 # de acordo com orientation
                 setattr(matched_coords, 'bottom', line)
             elif shape_line is None:
-                draw_line(frame, line, RED)
+                # Desenha todas as linhas horizontais draw_line(frame, line, RED)
+                pass
 
 
 def scale_detection(frame, line: Line, target_coords: List[Line], matched_coords, max_deviation=15):

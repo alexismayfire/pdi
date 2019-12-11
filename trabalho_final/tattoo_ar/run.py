@@ -4,8 +4,8 @@ import time
 
 from .colors import BLUE, GOLD, RED, GREEN
 from .detector import hough_detection, match_line_with_shape, scale_detection
-from .mask import Shape, get_mask_coordinates
-from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges
+from .mask import Line, Shape, get_mask_coordinates
+from .image import draw_lines, draw_tattoo, frame_to_hsv, hsv_edges, draw_tattoo_somehow
 
 
 def run():
@@ -49,15 +49,28 @@ def run():
             set_mask_coords = False
 
         if Shape.detected() is False:
+            
+            # Pega todas as Linhas
             lines = hough_detection(frame, edges, MIN_LINE_LENGHT)
+
+            # Procura nelas
             for line in lines:
                 # Na classe Shape é que vamos setar o que foi encontrado!
                 # Como ela só tem atributos de classe, não estamos instanciando um objeto,
                 # então não vai "perder" os valores entre um frame e outro                
                 match_line_with_shape(frame, line, coords, Shape, DEVIATION_ALLOWED)
-                cv2.line(frame, line.start, line.end, GREEN, 10)
-        else:      
+                # Escreve Todas as Linhas cv2.line(frame, line.start, line.end, GREEN, 10)
 
+            # Vamos trabalhar com o que temos, já que não temos os 3
+            aux = [Shape.left, Shape.right, Shape.bottom]
+            
+            #print('Shape1:', aux.left, '|',aux.right, '|',aux.bottom)            
+
+            # QUANDO TENHO PELO MENOS UMA LINHA ENCONTRADA
+            if aux[0] is not None or aux[1] is not None or aux[2] is not None:
+                draw_tattoo_somehow(frame, aux)
+    
+        else:      
             # TODO: força bruta de Hough aqui
             # Manipular coords de acordo com a necessidade
             # Salvar o coords em uma auxiliar
@@ -181,27 +194,39 @@ def run():
 
                 last_y = last_y + 10
         '''
-
-
-        TIME_COUNTER = TIME_COUNTER + 1
-        if TIME_COUNTER % 50 == 0:
-            # TODO: como resetar coords??
-            if Shape.detected():
-                if TIME_COUNTER % 600 == 0:
-                    print(f'RESETOU AS COORDENADAS INICIAIS | TIMER: {TIME_COUNTER}')
-                    coords = mask_coords
-                else:
-                    coords = [Shape.left, Shape.right, Shape.bottom]
-            Shape.left = None
-            Shape.right = None
-            Shape.bottom = None
-
+        ''' DEBUG PRINTS
+        print('Coords:', coords[0], '|', coords[1], '|', coords[2])'''
+        # print('Shape:', Shape.left, '|',Shape.right, '|',Shape.bottom)
+        # print('Coords:', coords[0], '|', coords[1], '|', coords[2])
+        
         # Desenha o shape inicial na imagem capturada
         if Shape.detected():
             draw_tattoo(frame, Shape)
             coords = [Shape.left, Shape.right, Shape.bottom]
+        elif Shape.any():
+            #draw_tattoo(frame, coords)
+            aux = [Shape.left, Shape.right, Shape.bottom]
+            draw_tattoo_somehow(frame, aux)
         else:
-            draw_lines(frame, mask_coords, BLUE)
+            if coords is not None:
+                draw_tattoo(frame, coords)
+            else:           
+                draw_lines(frame, mask_coords, BLUE)
+
+        TIME_COUNTER = TIME_COUNTER + 1
+        if TIME_COUNTER % 5 == 0:
+            '''
+            # TODO: como resetar coords??
+            if Shape.detected():
+                #if TIME_COUNTER % 600 == 0:
+                    print(f'RESETOU AS COORDENADAS INICIAIS | TIMER: {TIME_COUNTER}')
+                    coords = mask_coords
+                else:
+                    coords = [Shape.left, Shape.right, Shape.bottom]'''
+            Shape.left = None
+            Shape.right = None
+            Shape.bottom = None
+
 
         # Escreve os parâmetros na tela
         cv2.putText(frame, "Tamanho Minimo da Linha: " + str(MIN_LINE_LENGHT) + "(A S)", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
@@ -236,8 +261,6 @@ def run():
         # Valor ASCII do Esc
         if c == 27:
             break
-
-    print(coords)
 
     cap.release()
     cv2.destroyAllWindows()

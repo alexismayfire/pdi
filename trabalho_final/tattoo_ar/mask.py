@@ -1,8 +1,5 @@
 class Line:
     def __init__(self, xy_start, xy_end):
-        self.start = xy_start
-        self.end = xy_end
-
         # Para garantir que x1/y1 será sempre a menor coordenada
         # E x2/y2 sempre será a maior
         if xy_end[0] > xy_start[0]:
@@ -19,6 +16,9 @@ class Line:
             self.y1 = xy_end[1]
             self.y2 = xy_start[1]
 
+        self.start = (self.x1, self.y1)
+        self.end = (self.x2, self.y2)
+
         self.x = (self.x1 + self.x2) // 2
         self.y = (self.y1 + self.y2) // 2
 
@@ -27,6 +27,14 @@ class Line:
 
     def __str__(self):
         return f'[({self.x1}, {self.y1}), ({self.x2}, {self.y2})]'
+
+    def __eq__(self, other):
+        return (
+            self.x1 == other.x1 
+            and self.x2 == other.x2
+            and self.y1 == other.y1
+            and self.y2 == other.y2
+        ) 
 
     def horizontal(self, max_deviation) -> bool:
         return max_deviation > self.y_deviation and max_deviation < self.x_deviation
@@ -70,6 +78,10 @@ class Shape:
             return vertical_y
         else:
             return cls.bottom.y
+
+    @classmethod
+    def any(cls):
+        return cls.left or cls.right or cls.bottom
 
 
 def get_mask_coordinates(frame):
