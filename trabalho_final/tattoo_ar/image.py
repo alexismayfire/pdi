@@ -105,11 +105,23 @@ def draw_tattoo_somehow(frame, all_lines):
 
     aux = all_lines.copy()
 
+    # Tamanho da linha Left
+    if aux[0] is not None:
+        left_line_size = int(np.linalg.norm(np.array((Shape.left.x1, Shape.left.y1)) - np.array((Shape.left.x2, Shape.left.y2)))) 
+    
+    # Tamanho da linha Right
+    if aux[1] is not None:
+        right_line_size = int(np.linalg.norm(np.array((Shape.right.x1, Shape.right.y1)) - np.array((Shape.right.x2, Shape.right.y2)))) 
+
+    # Tamanho da linha Bottom
+    if aux[2] is not None:
+        bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2)))) 
+    
     # Só a Bottom
     if aux[0] is None and aux[1] is None and aux[2] is not None:        
         # aux[0] = Line((x1, y1), (x2, y2))
-        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - 80))
-        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - 80))
+        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - bottom_line_size))
+        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - bottom_line_size))
         
         # Linhas Inferidas
         # cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
@@ -118,23 +130,34 @@ def draw_tattoo_somehow(frame, all_lines):
     # Só a Right
     if aux[0] is None and aux[1] is not None and aux[2] is None:
         print('Só Right') 
-        aux[2] = Line((aux[1].x2 - 80, aux[1].y2), (aux[1].x2, aux[1].y2))
-        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - 80))
+        aux[2] = Line((aux[1].x2 - right_line_size, aux[1].y2), (aux[1].x2, aux[1].y2))
+        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - right_line_size))
 
         # Linhas Inferidas
         # cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
         # cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
 
     # Só a Left
-    if aux[0] is not None and aux[1] is  None and aux[2] is None: 
+    if aux[0] is not None and aux[1] is None and aux[2] is None: 
         print('Só Left') 
-        aux[2] = Line((aux[0].x2, aux[0].y2), (aux[0].x2 + 80, aux[0].y2))
-        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - 80))
+        aux[2] = Line((aux[0].x2, aux[0].y2), (aux[0].x2 + left_line_size, aux[0].y2))
+        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - left_line_size))
 
         # Linhas Inferidas
         # cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
         # cv2.line(frame, aux[1].start, aux[1].end, (255,200,50), 15)
-        
+
+    # Bottom e Left
+    if aux[0] is not None and aux[1] is None and aux[2] is not None:  
+        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - left_line_size))
+
+    # Bottom e Right
+    if aux[0] is None and aux[1] is not None and aux[2] is not None:  
+        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - right_line_size))
+
+    # Left e Right
+    if aux[0] is not None and aux[1] is not None and aux[2] is None:  
+        aux[2] = Line((aux[0].x2, aux[0].y2), (aux[1].x2, aux[1].y2))
 
     # print('Bottom', aux[2], 'Nova Esquerda:', aux[0], 'Nova Direita:', aux[1])
     Shape.left = aux[0]
