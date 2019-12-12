@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 
-from .colors import GOLD
+from .colors import GOLD, BLUE, RED
 from .mask import Line, Shape
+from .line import get_perpendicular_line, lines_approximation
 
 
 def frame_to_hsv(frame):
@@ -121,14 +122,46 @@ def draw_tattoo_somehow(frame, all_lines):
         bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2)))) 
     
     # Só a Bottom
-    if aux[0] is None and aux[1] is None and aux[2] is not None:        
-        # aux[0] = Line((x1, y1), (x2, y2))
-        aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - bottom_line_size))
-        aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - bottom_line_size))
+    if aux[0] is None and aux[1] is None and aux[2] is not None:                
+        #aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - bottom_line_size))
+        #aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - bottom_line_size))
+        aux[2] = Line((aux[2].x1, aux[2].y1), (aux[2].x2 + 1, aux[2].y2 + 1))
+        cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
         
+        #width = 480
+        #height = 640
+        #img = np.zeros((width, height, 3), dtype=np.uint8)
+
+        #x1 = 100
+        #y1 = 80
+        x1 = aux[2].x1
+        y1 = aux[2].y1
+        A = (x1, y1)
+
+        #x2 = 80
+        #y2 = 100
+        x2 = aux[2].x2
+        y2 = aux[2].y2
+        B = (x2, y2)
+
+        # Desenhando
+        cv2.line(frame, A, B, (45,45,45), 2)
+
+        left_line, right_line = lines_approximation(x1, y1, x2, y2, 480)
+ 
         # Linhas Inferidas
-        # cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
-        # cv2.line(frame, aux[1].start, aux[1].end, (255,200,50), 15)
+        new_line_left = Line((x1, y1), (left_line[0], left_line[1]))
+        print(new_line_left)
+
+        cv2.line(frame, (x1, y1), (left_line[0], left_line[1]), RED, 2)
+        cv2.line(frame, (x2, y2), (right_line[0], right_line[1]), RED, 2)
+
+        aux[0] = Line((x1, y1), (left_line[0], left_line[1]))
+        aux[1] = Line((x2, y2), (right_line[0], right_line[1]))
+
+        # Linhas Inferidas
+        #cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
+        #cv2.line(frame, aux[1].start, aux[1].end, (255,200,50), 15)
 
     # Só a Right
     if aux[0] is None and aux[1] is not None and aux[2] is None:
