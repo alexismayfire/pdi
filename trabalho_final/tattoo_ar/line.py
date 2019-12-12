@@ -37,7 +37,11 @@ def get_perpendicular_line(x, y, slope, image_width, desired_line_size):
     
     for i in test_range:
         x1 = i
-        y1 = int(x1 * perpendicular_slope + intercept)
+        try:
+            y1 = int(x1 * perpendicular_slope + intercept)
+        except ValueError:
+            print(perpendicular_slope)
+            raise
 
         # Distância euclidiana simples 
         distance = math.sqrt(((x - x1) ** 2) + ((y - y1) ** 2))
@@ -70,8 +74,12 @@ def lines_approximation(x1, y1, x2, y2, width):
 
     slope, intercept, _, _, _ = linregress([x1, x2], [y1, y2])
     
-    left_line = get_perpendicular_line(x1, y1, slope, width, desired_size)
-    right_line = get_perpendicular_line(x2, y2, slope, width, desired_size)
+    if slope != 0:
+        left_line = get_perpendicular_line(x1, y1, slope, width, desired_size)
+        right_line = get_perpendicular_line(x2, y2, slope, width, desired_size)
+    else:
+        left_line = (x1, y1 - int(desired_size))
+        right_line = (x2, y2 - int(desired_size))
 
     return left_line, right_line
 

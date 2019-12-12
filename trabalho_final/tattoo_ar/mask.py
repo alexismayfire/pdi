@@ -5,17 +5,14 @@ class Line:
         if xy_end[0] > xy_start[0]:
             self.x1 = xy_start[0]
             self.x2 = xy_end[0]
-        else:
-            self.x1 = xy_end[0]
-            self.x2 = xy_start[0]
-
-        if xy_end[1] > xy_start[1]:
             self.y1 = xy_start[1]
             self.y2 = xy_end[1]
         else:
+            self.x1 = xy_end[0]
+            self.x2 = xy_start[0]
             self.y1 = xy_end[1]
             self.y2 = xy_start[1]
-
+  
         self.start = (self.x1, self.y1)
         self.end = (self.x2, self.y2)
 

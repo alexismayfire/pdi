@@ -105,7 +105,7 @@ def draw_tattoo(frame, shape: Shape):
 def draw_tattoo_somehow(frame, all_lines):
 
     # Left , Rigth, Bottom
-    print('All Lines:', all_lines[0], '|',all_lines[1], '|',all_lines[2])
+    # print('All Lines:', all_lines[0], '|',all_lines[1], '|',all_lines[2])
 
     aux = all_lines.copy()
 
@@ -122,10 +122,14 @@ def draw_tattoo_somehow(frame, all_lines):
         bottom_line_size = int(np.linalg.norm(np.array((Shape.bottom.x1, Shape.bottom.y1)) - np.array((Shape.bottom.x2, Shape.bottom.y2)))) 
     
     # Só a Bottom
-    if aux[0] is None and aux[1] is None and aux[2] is not None:                
+    if aux[0] is None and aux[1] is None and aux[2] is not None:
+        print('Só bottom')          
         #aux[0] = Line((aux[2].x1, aux[2].y1), (aux[2].x1, aux[2].y1 - bottom_line_size))
         #aux[1] = Line((aux[2].x2, aux[2].y2), (aux[2].x2, aux[2].y2 - bottom_line_size))
-        aux[2] = Line((aux[2].x1, aux[2].y1), (aux[2].x2 + 1, aux[2].y2 + 1))
+        if aux[2].x1 == aux[2].x2:
+            aux[2].x1 + 3
+        if aux[2].y1 == aux[2].y2:
+            aux[2].y1 + 3
         cv2.line(frame, aux[2].start, aux[2].end, (255,200,50), 15)
         
         #width = 480
@@ -150,14 +154,16 @@ def draw_tattoo_somehow(frame, all_lines):
         left_line, right_line = lines_approximation(x1, y1, x2, y2, 480)
  
         # Linhas Inferidas
-        new_line_left = Line((x1, y1), (left_line[0], left_line[1]))
-        print(new_line_left)
+        # new_line_left = Line((x1, y1), (left_line[0], left_line[1]))
+        # print(new_line_left)
 
         cv2.line(frame, (x1, y1), (left_line[0], left_line[1]), RED, 2)
         cv2.line(frame, (x2, y2), (right_line[0], right_line[1]), RED, 2)
 
         aux[0] = Line((x1, y1), (left_line[0], left_line[1]))
         aux[1] = Line((x2, y2), (right_line[0], right_line[1]))
+        cv2.line(frame, aux[0].start, aux[0].end, (50, 255, 0), 2)
+        cv2.line(frame, aux[1].start, aux[1].end, (50, 255, 0), 2)
 
         # Linhas Inferidas
         #cv2.line(frame, aux[0].start, aux[0].end, (255,200,50), 15)
