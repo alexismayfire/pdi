@@ -32,7 +32,10 @@ def frame_to_hsv(frame):
 
 
 def hsv_edges(hsv, threshold_1=80, threshold_2=200):
-    return cv2.Canny(hsv, threshold_1, threshold_2)
+    width, height, _ = hsv.shape
+    binarized = np.where(hsv>=np.array([10,10,0]),255,0)
+    return binarized[:,:,0].astype(np.uint8)
+    # return cv2.Canny(hsv, threshold_1, threshold_2)
 
 
 def draw_line(image, line, color, thickness=5):

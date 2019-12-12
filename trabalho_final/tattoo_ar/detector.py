@@ -81,7 +81,7 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                     setattr(matched_coords, orientation, line)
                 elif shape_line is None:
                     #Desenha todas as linhas verticais
-                    #draw_line(frame, line, RED)
+                    draw_line(frame, line, RED)
                     pass
 
     elif line.horizontal(max_deviation):
@@ -128,7 +128,7 @@ def match_line_with_shape(frame, line: Line, target_coords: List[Line], matched_
                 setattr(matched_coords, 'bottom', line)
             elif shape_line is None:
                 # Desenha todas as linhas horizontais 
-                #draw_line(frame, line, RED)
+                draw_line(frame, line, RED)
                 pass
 
 def angle_between(p1, p2):
